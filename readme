@@ -1,0 +1,68 @@
+Backend Challenge – Game Engine with User Simulator 
+
+ 
+
+Objective: 
+Build a Go-based backend system that simulates multiple users answering a game question, evaluates responses in real-time, and announces a winner. 
+
+Shape 
+
+Requirements: 
+
+You must build three components: 
+
+1. Mock User Engine 
+
+Accepts an input N (e.g., 1000 users). 
+
+For each user, randomly: 
+
+Assigns a correct answer flag (yes/no). 
+
+Adds a random delay (10–1000ms) to simulate network lag. 
+
+Sends all responses concurrently to the API server. 
+
+2. API Server 
+
+Exposes an endpoint /submit to receive user responses (JSON format). 
+
+Forwards each response to the Game Engine for evaluation. 
+
+3. Game Engine 
+
+Determines the first user who sent a correct answer. 
+
+Prints the winner's user ID on the server console. 
+
+Ignores all subsequent correct responses once a winner is found. 
+
+Shape 
+
+Constraints & Evaluation: 
+
+Language: Must use Go. 
+
+The server must handle 1000 concurrent requests without race conditions or deadlocks. 
+
+Responses should be evaluated in real-time (no batching). 
+
+Code must demonstrate: 
+
+Concurrency handling (goroutines, mutexes, channels, or atomic operations). 
+
+Clean structure (separate files/modules for Mock User Engine, API, and Game Engine). 
+
+Correctness under load (only one winner is declared). 
+
+Shape 
+
+Bonus Points: 
+
+Add metrics to track how many correct/incorrect answers were received. 
+
+Print the winner. 
+
+Use channels instead of only mutexes for event-driven response handling. 
+
+ 
