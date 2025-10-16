@@ -1,96 +1,136 @@
-How to Run : go run main.go
+Backend Challenge – Game Engine with User Simulator
+
+A minimal, event-driven Go backend that simulates many users answering a game question concurrently, evaluates responses in real time, and announces a single winner. It also exposes simple metrics.
+
+✨ Features
+
+Game Engine (channel-driven): first correct submission wins (exactly once).
+
+API Server: /submit, /winner, /metrics, /healthz.
+
+Mock User Engine (optional): fire N concurrent, lagged submissions.
+
+Metrics: totals for total, correct, incorrect, and winner_id.
+
+🗂️ Project Layout
+.
+├── api_server/
+│   └── server.go
+├── game_engine/
+│   └── game_engine.go
+├── mock_api/
+│   └── mock.go
+└── main.go
+
+🚀 How to Run
+go run main.go
 
 
+By default the API listens on :8080.
+If your version supports flags, you can override: -port 9090, -run-mock=true, -n 1000, etc.
 
-Api : 
+Check the server is up:
 
-# health
+curl -s localhost:8080/healthz
+# ok
+
+🔌 API Endpoints
+Health
 curl -s localhost:8080/healthz
 
-# metrics before any submissions (should be valid JSON with zeros)
+Metrics (before any submissions: zeros)
 curl -s localhost:8080/metrics | jq
 
-#submit new user
+
+Example response
+
+{
+  "total": 0,
+  "correct": 0,
+  "incorrect": 0,
+  "winner_id": 0
+}
+
+Submit a User Answer
+
+Important: JSON uses lowercase field names. Use correct, not Correct.
+
 curl --location 'localhost:8080/submit' \
---header 'Content-Type: application/json' \
---data '{
-    "user_id":112345,
-    "Correct": true
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user_id": 112345,
+    "correct": true
 }'
 
 
+Example response
 
-# now metrics and winner should update
+{
+  "queued_at": "2025-10-16T08:00:00Z",
+  "status": "accepted"
+}
+
+Winner & Updated Metrics
+# metrics reflect submissions
 curl -s localhost:8080/metrics | jq
-curl -s localhost:8080/winner  | jq
+
+# winner (appears once a correct submission wins)
+curl -s localhost:8080/winner | jq
 
 
+Example winner response
 
-Backend Challenge – Game Engine with User Simulator 
+{
+  "found": true,
+  "user_id": 112345
+}
 
- 
+🧪 Quick End-to-End (Manual)
 
-Objective: 
-Build a Go-based backend system that simulates multiple users answering a game question, evaluates responses in real-time, and announces a winner. 
+Start server: go run main.go
 
-Shape 
+Verify health: curl -s localhost:8080/healthz
 
-Requirements: 
+Check metrics: curl -s localhost:8080/metrics | jq
 
-You must build three components: 
+Submit answers (one or many) via /submit
 
-1. Mock User Engine 
+Re-check /metrics and /winner
 
-Accepts an input N (e.g., 1000 users). 
+⚙️ Optional (Mock User Engine)
 
-For each user, randomly: 
+If your build includes the mock runner flags:
 
-Assigns a correct answer flag (yes/no). 
+go run main.go -run-mock=true -n 1000 -min-lag-ms=10 -max-lag-ms=1000
 
-Adds a random delay (10–1000ms) to simulate network lag. 
 
-Sends all responses concurrently to the API server. 
+This will generate 1k concurrent submissions with randomized lag and correctness, ensuring exactly one winner.
 
-2. API Server 
+🧰 Troubleshooting
 
-Exposes an endpoint /submit to receive user responses (JSON format). 
+404 on /metrics
+You’re likely running an older binary or a different server. Rebuild and rerun:
 
-Forwards each response to the Game Engine for evaluation. 
+go clean -cache && go run main.go
 
-3. Game Engine 
 
-Determines the first user who sent a correct answer. 
+Confirm health: curl -s localhost:8080/healthz
 
-Prints the winner's user ID on the server console. 
+JSON field case
+Make sure your body uses correct (lowercase). Example:
 
-Ignores all subsequent correct responses once a winner is found. 
+{"user_id": 1, "correct": true}
 
-Shape 
 
-Constraints & Evaluation: 
+Port in use / wrong port
+Change port: go run main.go -port 9090 and hit localhost:9090.
 
-Language: Must use Go. 
+📑 Notes
 
-The server must handle 1000 concurrent requests without race conditions or deadlocks. 
+Evaluation is real-time via channels; no batching.
 
-Responses should be evaluated in real-time (no batching). 
+Concurrency is safe: single consumer goroutine + atomics for winner/metrics.
 
-Code must demonstrate: 
+Exactly one winner is declared; all subsequent correct answers are ignored.
 
-Concurrency handling (goroutines, mutexes, channels, or atomic operations). 
-
-Clean structure (separate files/modules for Mock User Engine, API, and Game Engine). 
-
-Correctness under load (only one winner is declared). 
-
-Shape 
-
-Bonus Points: 
-
-Add metrics to track how many correct/incorrect answers were received. 
-
-Print the winner. 
-
-Use channels instead of only mutexes for event-driven response handling. 
-
- 
+Happy hacking! 🎮🚀
